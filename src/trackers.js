@@ -8,7 +8,12 @@ export const navigationPath = [{ url: window.location.href, timestamp: new Date(
 export const clickTrail = [];
 export const rageClicks = [];
 export const featureUsage = [];
+export const stateChanges = [];
+export const resourceFailures = [];
 export const sessionStart = Date.now();
+export let maxScrollDepth = { percent: 0, pixels: 0, pageHeight: 0 };
+export let idleTime = { totalMs: 0, idleCount: 0 };
+export let visibility = { hiddenCount: 0, totalHiddenMs: 0 };
 
 let _initialized = false;
 
@@ -115,4 +120,78 @@ export function initTrackers() {
     featureUsage.push({ feature: name, timestamp: new Date().toISOString() });
     if (featureUsage.length > 20) featureUsage.shift();
   };
+
+  // State change tracker — apps call window.__fbwidget_trackState(label, snapshot)
+  window.__fbwidget_trackState = (label, snapshot) => {
+    let data;
+    try { data = typeof snapshot === 'string' ? snapshot.slice(0, 500) : JSON.stringify(snapshot).slice(0, 500); }
+    catch (_) { data = String(snapshot).slice(0, 500); }
+    stateChanges.push({ label, data, timestamp: new Date().toISOString() });
+    if (stateChanges.length > 5) stateChanges.shift();
+  };
+
+  // Scroll depth tracking (throttled)
+  let _scrollTick = false;
+  window.addEventListener('scroll', () => {
+    if (_scrollTick) return;
+    _scrollTick = true;
+    requestAnimationFrame(() => {
+      const scrollY = window.scrollY || window.pageYOffset;
+      const pageH = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight) - window.innerHeight;
+      const pct = pageH > 0 ? Math.round((scrollY / pageH) * 100) : 0;
+      if (pct > maxScrollDepth.percent) {
+        maxScrollDepth.percent = pct;
+        maxScrollDepth.pixels = Math.round(scrollY);
+        maxScrollDepth.pageHeight = Math.round(pageH + window.innerHeight);
+      }
+      _scrollTick = false;
+    });
+  }, { passive: true });
+
+  // Idle time detection (inactive >30s = idle)
+  let _lastActivity = Date.now();
+  let _idleStart = null;
+  const IDLE_THRESHOLD = 30000;
+  const resetActivity = () => {
+    const now = Date.now();
+    if (_idleStart) {
+      idleTime.totalMs += now - _idleStart;
+      _idleStart = null;
+    }
+    _lastActivity = now;
+  };
+  ['mousemove', 'keypress', 'scroll', 'click', 'touchstart'].forEach(evt =>
+    window.addEventListener(evt, resetActivity, { passive: true })
+  );
+  setInterval(() => {
+    if (Date.now() - _lastActivity >= IDLE_THRESHOLD && !_idleStart) {
+      _idleStart = Date.now();
+      idleTime.idleCount++;
+    }
+  }, 5000);
+
+  // Page visibility tracking
+  let _hiddenAt = null;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      _hiddenAt = Date.now();
+      visibility.hiddenCount++;
+    } else if (_hiddenAt) {
+      visibility.totalHiddenMs += Date.now() - _hiddenAt;
+      _hiddenAt = null;
+    }
+  });
+
+  // Resource loading failures (images, scripts, stylesheets)
+  window.addEventListener('error', (e) => {
+    const el = e.target;
+    if (el && (el.tagName === 'IMG' || el.tagName === 'SCRIPT' || el.tagName === 'LINK')) {
+      resourceFailures.push({
+        tagName: el.tagName.toLowerCase(),
+        src: (el.src || el.href || '').slice(0, 150),
+        timestamp: new Date().toISOString(),
+      });
+      if (resourceFailures.length > 10) resourceFailures.shift();
+    }
+  }, true);
 }

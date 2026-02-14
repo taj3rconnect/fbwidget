@@ -1,6 +1,7 @@
 import {
   consoleErrors, networkFailures, apiResponseTimes, pendingRequests,
-  navigationPath, clickTrail, rageClicks, featureUsage, sessionStart,
+  navigationPath, clickTrail, rageClicks, featureUsage, stateChanges,
+  resourceFailures, sessionStart, maxScrollDepth, idleTime, visibility,
 } from './trackers';
 
 export async function collectEnvInfo() {
@@ -163,6 +164,27 @@ export async function collectEnvInfo() {
   // Feature usage
   if (featureUsage.length > 0) {
     envInfo.featureUsage = [...featureUsage];
+  }
+
+  // State changes (error replay context)
+  if (stateChanges.length > 0) {
+    envInfo.stateChanges = [...stateChanges];
+  }
+
+  // Scroll depth
+  envInfo.scrollDepth = { ...maxScrollDepth };
+
+  // Idle time
+  envInfo.idleTime = `${Math.round(idleTime.totalMs / 1000)} seconds`;
+  envInfo.idleCount = idleTime.idleCount;
+
+  // Page visibility
+  envInfo.visibilityHiddenCount = visibility.hiddenCount;
+  envInfo.visibilityTotalHidden = `${Math.round(visibility.totalHiddenMs / 1000)} seconds`;
+
+  // Resource loading failures
+  if (resourceFailures.length > 0) {
+    envInfo.resourceFailures = [...resourceFailures];
   }
 
   // Browser extensions detection
