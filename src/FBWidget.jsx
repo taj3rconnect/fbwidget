@@ -464,7 +464,7 @@ export function FBWidget({ apiUrl = '/api/feedback', userName, userEmail }) {
               </div>
             </>
           )}
-          <div style={{ fontSize: '10px', color: '#d1d5db', textAlign: 'right', marginTop: 'auto', paddingTop: '8px' }}>
+          <div style={{ fontSize: '10px', color: '#1f2937', fontWeight: 600, textAlign: 'right', marginTop: 'auto', paddingTop: '8px' }}>
             {FBWIDGET_VERSION}
           </div>
         </div>
