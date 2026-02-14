@@ -13,6 +13,8 @@ const PRIORITIES = [
   { value: 'high', label: 'High', color: '#ef4444' },
 ];
 
+const FBWIDGET_VERSION = 'v1.0';
+
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'application/pdf', 'text/plain'];
 const ALLOWED_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.pdf', '.txt', '.log'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -462,6 +464,9 @@ export function FBWidget({ apiUrl = '/api/feedback', userName, userEmail }) {
               </div>
             </>
           )}
+          <div style={{ fontSize: '10px', color: '#d1d5db', textAlign: 'right', marginTop: 'auto', paddingTop: '8px' }}>
+            {FBWIDGET_VERSION}
+          </div>
         </div>
       </div>
     </div>
