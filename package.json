@@ -1,0 +1,29 @@
+{
+  "name": "fbwidget",
+  "version": "1.0.0",
+  "description": "Feedback/support chat widget for React apps with SendGrid email, file attachments, and screenshot capture",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "files": [
+    "src/"
+  ],
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  },
+  "optionalDependencies": {
+    "html2canvas": "^1.4.0"
+  },
+  "keywords": [
+    "feedback",
+    "widget",
+    "support",
+    "react",
+    "sendgrid"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/taj3rconnect/fbwidget.git"
+  },
+  "license": "MIT"
+}
