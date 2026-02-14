@@ -261,6 +261,51 @@ export function FBWidget({ apiUrl = '/api/feedback', userName, userEmail }) {
     }
     setSubmitting(true);
     try {
+      // Collect detailed environment info
+      const nav = navigator;
+      const conn = nav.connection || nav.mozConnection || nav.webkitConnection;
+      const envInfo = {
+        userAgent: nav.userAgent,
+        platform: nav.platform || '',
+        language: nav.language || '',
+        languages: (nav.languages || []).join(', '),
+        cookiesEnabled: nav.cookieEnabled,
+        doNotTrack: nav.doNotTrack,
+        online: nav.onLine,
+        screenWidth: screen.width,
+        screenHeight: screen.height,
+        screenAvailWidth: screen.availWidth,
+        screenAvailHeight: screen.availHeight,
+        screenColorDepth: screen.colorDepth,
+        screenPixelDepth: screen.pixelDepth,
+        windowInnerWidth: window.innerWidth,
+        windowInnerHeight: window.innerHeight,
+        devicePixelRatio: window.devicePixelRatio,
+        maxTouchPoints: nav.maxTouchPoints || 0,
+        hardwareConcurrency: nav.hardwareConcurrency || 'unknown',
+        deviceMemory: nav.deviceMemory ? `${nav.deviceMemory} GB` : 'unknown',
+        connectionType: conn ? conn.effectiveType || conn.type || 'unknown' : 'unknown',
+        connectionDownlink: conn ? `${conn.downlink} Mbps` : 'unknown',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezoneOffset: `UTC${new Date().getTimezoneOffset() > 0 ? '-' : '+'}${Math.abs(new Date().getTimezoneOffset() / 60)}`,
+        vendor: nav.vendor || '',
+        pdfViewerEnabled: nav.pdfViewerEnabled ?? 'unknown',
+        webdriver: nav.webdriver || false,
+      };
+
+      // Try to get GPU info
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (gl) {
+          const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+          if (dbg) {
+            envInfo.gpuVendor = gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL);
+            envInfo.gpuRenderer = gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL);
+          }
+        }
+      } catch (_) {}
+
       const fd = new FormData();
       fd.append('type', form.type);
       fd.append('title', form.title);
@@ -270,9 +315,10 @@ export function FBWidget({ apiUrl = '/api/feedback', userName, userEmail }) {
       fd.append('email', form.email);
       fd.append('url', window.location.href);
       fd.append('timestamp', new Date().toISOString());
-      fd.append('userAgent', navigator.userAgent);
+      fd.append('userAgent', nav.userAgent);
       fd.append('screen', `${screen.width}x${screen.height}`);
-      fd.append('platform', navigator.platform || '');
+      fd.append('platform', nav.platform || '');
+      fd.append('envInfo', JSON.stringify(envInfo));
       attachments.forEach((a) => fd.append('attachments', a.file));
 
       const res = await fetch(apiUrl, { method: 'POST', body: fd });
