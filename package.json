@@ -1,6 +1,6 @@
 {
   "name": "fbwidget",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Feedback/support chat widget for React apps with SendGrid email, file attachments, and screenshot capture",
   "main": "src/index.js",
   "module": "src/index.js",
