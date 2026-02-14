@@ -13,7 +13,7 @@ const PRIORITIES = [
   { value: 'high', label: 'High', color: '#ef4444' },
 ];
 
-const FBWIDGET_VERSION = 'v1.2';
+const FBWIDGET_VERSION = 'v1.3';
 
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'application/pdf', 'text/plain'];
 const ALLOWED_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.pdf', '.txt', '.log'];
