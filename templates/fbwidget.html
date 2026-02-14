@@ -1,0 +1,164 @@
+<!-- FBWidget - Feedback Widget (Vanilla HTML/JS) -->
+<!-- Add this before </body> in your HTML file -->
+
+<style>
+  .fbw-trigger{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:#2563eb;color:#fff;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(37,99,235,.4);z-index:9999;display:flex;align-items:center;justify-content:center;font-size:24px;transition:transform .2s}
+  .fbw-trigger:hover{transform:scale(1.1)}
+  .fbw-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:10000;opacity:0;transition:opacity .3s;pointer-events:none}
+  .fbw-overlay.open{opacity:1;pointer-events:auto}
+  .fbw-panel{position:fixed;top:0;right:0;bottom:0;width:420px;max-width:100vw;background:#fff;z-index:10001;box-shadow:-4px 0 24px rgba(0,0,0,.15);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s ease}
+  .fbw-panel.open{transform:translateX(0)}
+  .fbw-header{padding:16px 20px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;background:#2563eb;color:#fff}
+  .fbw-header h3{margin:0;font-size:16px;font-weight:600}
+  .fbw-header button{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px 8px}
+  .fbw-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+  .fbw-label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
+  .fbw-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .fbw-type-btn{padding:10px 12px;border-radius:8px;border:2px solid #e5e7eb;background:#fff;cursor:pointer;text-align:left;font-size:13px;color:#1f2937;transition:all .15s}
+  .fbw-type-btn.selected{border-color:#2563eb;background:#eff6ff;font-weight:600}
+  .fbw-input,.fbw-textarea{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #d1d5db;font-size:14px;outline:none;box-sizing:border-box;font-family:inherit}
+  .fbw-textarea{resize:vertical;min-height:80px}
+  .fbw-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .fbw-priority-row{display:flex;gap:8px}
+  .fbw-priority-btn{flex:1;padding:8px;border-radius:8px;border:2px solid #e5e7eb;background:#fff;cursor:pointer;font-size:13px;color:#1f2937;text-align:center}
+  .fbw-priority-btn.selected[data-priority="low"]{border-color:#22c55e;background:rgba(34,197,94,.08);font-weight:600}
+  .fbw-priority-btn.selected[data-priority="medium"]{border-color:#f59e0b;background:rgba(245,158,11,.08);font-weight:600}
+  .fbw-priority-btn.selected[data-priority="high"]{border-color:#ef4444;background:rgba(239,68,68,.08);font-weight:600}
+  .fbw-drop{border:2px dashed #d1d5db;border-radius:8px;padding:16px;text-align:center;cursor:pointer;color:#6b7280;font-size:13px}
+  .fbw-drop.active{border-color:#2563eb;background:#eff6ff}
+  .fbw-thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .fbw-thumb{position:relative;width:64px;height:64px;border-radius:6px;overflow:hidden;border:1px solid #e5e7eb}
+  .fbw-thumb img{width:100%;height:100%;object-fit:cover}
+  .fbw-thumb .fname{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f3f4f6;font-size:10px;color:#6b7280;padding:4px;text-align:center;word-break:break-all}
+  .fbw-thumb .remove{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center}
+  .fbw-submit{padding:12px;border-radius:8px;background:#2563eb;color:#fff;border:none;cursor:pointer;font-size:15px;font-weight:600;width:100%;transition:background .15s}
+  .fbw-submit:disabled{background:#93c5fd;cursor:not-allowed}
+  .fbw-success{text-align:center;padding:40px 20px;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .fbw-success h3{margin:0;color:#1f2937}
+  .fbw-success p{color:#6b7280;margin:0}
+  .fbw-meta{font-size:11px;color:#9ca3af;text-align:center}
+</style>
+
+<div id="fb-widget-root">
+  <button class="fbw-trigger" id="fbw-trigger" title="Send Feedback">💬</button>
+  <div class="fbw-overlay" id="fbw-overlay"></div>
+  <div class="fbw-panel" id="fbw-panel">
+    <div class="fbw-header">
+      <h3>Send Feedback</h3>
+      <button id="fbw-close">✕</button>
+    </div>
+    <div class="fbw-body" id="fbw-body"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const API_URL = '/api/feedback';
+  const ALLOWED_EXT = ['.png','.jpg','.jpeg','.gif','.pdf','.txt','.log'];
+  const MAX_SIZE = 10*1024*1024;
+  const TYPES = [
+    {v:'bug',l:'Bug Report',i:'🐛'},{v:'feature',l:'Feature Request',i:'✨'},
+    {v:'question',l:'Question',i:'❓'},{v:'support',l:'Support Ticket',i:'🎫'}
+  ];
+  const PRIS = [{v:'low',l:'Low'},{v:'medium',l:'Medium'},{v:'high',l:'High'}];
+
+  let state = {type:'bug',title:'',desc:'',priority:'medium',name:'',email:'',attachments:[]};
+  let isOpen=false, submitting=false;
+
+  const $=id=>document.getElementById(id);
+  const trigger=$('fbw-trigger'), overlay=$('fbw-overlay'), panel=$('fbw-panel'), body=$('fbw-body');
+
+  function toggle(open){
+    isOpen=open;
+    trigger.style.display=open?'none':'flex';
+    overlay.classList.toggle('open',open);
+    panel.classList.toggle('open',open);
+  }
+
+  trigger.onclick=()=>{toggle(true);render()};
+  overlay.onclick=$('fbw-close').onclick=()=>toggle(false);
+
+  function render(success){
+    if(success){
+      body.innerHTML=`<div class="fbw-success"><span style="font-size:48px">✅</span><h3>Thank you!</h3><p>Your feedback has been submitted successfully.</p><button class="fbw-submit" id="fbw-again">Submit Another</button></div>`;
+      $('fbw-again').onclick=()=>{state={type:'bug',title:'',desc:'',priority:'medium',name:'',email:'',attachments:[]};render()};
+      return;
+    }
+    body.innerHTML=`
+      <div><label class="fbw-label">Type</label><div class="fbw-type-grid">${TYPES.map(t=>`<button class="fbw-type-btn${state.type===t.v?' selected':''}" data-type="${t.v}">${t.i} ${t.l}</button>`).join('')}</div></div>
+      <div class="fbw-row"><div><label class="fbw-label">Name</label><input class="fbw-input" id="fbw-name" placeholder="Your name" value="${esc(state.name)}"></div><div><label class="fbw-label">Email</label><input class="fbw-input" id="fbw-email" type="email" placeholder="you@example.com" value="${esc(state.email)}"></div></div>
+      <div><label class="fbw-label">Title</label><input class="fbw-input" id="fbw-title" placeholder="Brief summary" value="${esc(state.title)}"></div>
+      <div><label class="fbw-label">Description</label><textarea class="fbw-textarea" id="fbw-desc" placeholder="Describe in detail...">${esc(state.desc)}</textarea></div>
+      <div><label class="fbw-label">Priority</label><div class="fbw-priority-row">${PRIS.map(p=>`<button class="fbw-priority-btn${state.priority===p.v?' selected':''}" data-priority="${p.v}">${p.l}</button>`).join('')}</div></div>
+      <div><label class="fbw-label">Attachments</label><div class="fbw-drop" id="fbw-drop">📎 Drop files here, paste from clipboard, or click to browse<div style="font-size:11px;margin-top:4px;color:#9ca3af">PNG, JPG, GIF, PDF, TXT, LOG — max 10MB each</div></div><input type="file" id="fbw-file" multiple hidden accept=".png,.jpg,.jpeg,.gif,.pdf,.txt,.log"><div class="fbw-thumbs" id="fbw-thumbs"></div></div>
+      <button class="fbw-submit" id="fbw-submit"${submitting?' disabled':''}>${submitting?'Submitting...':'Submit Feedback'}</button>
+      <div class="fbw-meta">Auto-captures: page URL, browser info, screen size, timestamp</div>`;
+
+    // Bind events
+    body.querySelectorAll('.fbw-type-btn').forEach(b=>b.onclick=()=>{state.type=b.dataset.type;render()});
+    body.querySelectorAll('.fbw-priority-btn').forEach(b=>b.onclick=()=>{state.priority=b.dataset.priority;render()});
+    $('fbw-name').oninput=e=>{state.name=e.target.value};
+    $('fbw-email').oninput=e=>{state.email=e.target.value};
+    $('fbw-title').oninput=e=>{state.title=e.target.value};
+    $('fbw-desc').oninput=e=>{state.desc=e.target.value};
+
+    const drop=$('fbw-drop'),fi=$('fbw-file');
+    drop.onclick=()=>fi.click();
+    drop.ondragover=e=>{e.preventDefault();drop.classList.add('active')};
+    drop.ondragleave=()=>drop.classList.remove('active');
+    drop.ondrop=e=>{e.preventDefault();drop.classList.remove('active');addFiles(e.dataTransfer.files)};
+    fi.onchange=e=>{addFiles(e.target.files);e.target.value=''};
+    $('fbw-submit').onclick=submit;
+    renderThumbs();
+  }
+
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+
+  function addFiles(files){
+    for(const f of files){
+      if(f.size>MAX_SIZE){alert(`"${f.name}" exceeds 10MB.`);continue}
+      const ext='.'+f.name.split('.').pop().toLowerCase();
+      if(!ALLOWED_EXT.includes(ext)){alert(`Type not allowed: ${f.name}`);continue}
+      const id=Math.random().toString(36).slice(2);
+      const preview=f.type.startsWith('image/')?URL.createObjectURL(f):null;
+      state.attachments.push({file:f,id,preview});
+    }
+    renderThumbs();
+  }
+
+  function renderThumbs(){
+    const c=$('fbw-thumbs');if(!c)return;
+    c.innerHTML=state.attachments.map(a=>`<div class="fbw-thumb">${a.preview?`<img src="${a.preview}">`:`<div class="fname">${esc(a.file.name)}</div>`}<button class="remove" data-id="${a.id}">✕</button></div>`).join('');
+    c.querySelectorAll('.remove').forEach(b=>b.onclick=()=>{
+      const i=state.attachments.findIndex(a=>a.id===b.dataset.id);
+      if(i!==-1){if(state.attachments[i].preview)URL.revokeObjectURL(state.attachments[i].preview);state.attachments.splice(i,1);renderThumbs()}
+    });
+  }
+
+  async function submit(){
+    if(!state.title.trim()||!state.desc.trim()){alert('Title and description are required.');return}
+    submitting=true;render();
+    try{
+      const fd=new FormData();
+      fd.append('type',state.type);fd.append('title',state.title);fd.append('description',state.desc);
+      fd.append('priority',state.priority);fd.append('name',state.name);fd.append('email',state.email);
+      fd.append('url',location.href);fd.append('timestamp',new Date().toISOString());
+      fd.append('userAgent',navigator.userAgent);fd.append('screen',screen.width+'x'+screen.height);
+      fd.append('platform',navigator.platform||'');
+      state.attachments.forEach(a=>fd.append('attachments',a.file));
+      const r=await fetch(API_URL,{method:'POST',body:fd});
+      if(!r.ok)throw new Error();
+      submitting=false;state={type:'bug',title:'',desc:'',priority:'medium',name:'',email:'',attachments:[]};render(true);
+    }catch(e){submitting=false;render();alert('Failed to submit feedback.');console.error(e)}
+  }
+
+  document.addEventListener('paste',e=>{
+    if(!isOpen)return;
+    const files=[];
+    for(const it of(e.clipboardData?.items||[]))if(it.kind==='file'){const f=it.getAsFile();if(f)files.push(f)}
+    if(files.length){e.preventDefault();addFiles(files)}
+  });
+
+  render();
+})();
+</script>

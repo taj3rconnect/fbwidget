@@ -1,0 +1,12 @@
+{
+  "name": "fbwidget",
+  "version": "1.0.0",
+  "description": "Feedback/support chat widget for any web app with email notifications and file attachments",
+  "skills": [
+    {
+      "name": "add-fbwidget",
+      "description": "Add a feedback widget to the current project",
+      "invocation": "fbwidget:add"
+    }
+  ]
+}
