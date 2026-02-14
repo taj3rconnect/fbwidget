@@ -139,14 +139,14 @@ When user types a title, show similar open tickets (from Phase 4.3). Let them cl
 
 Requires: `POST /api/feedback/:id/upvote`
 
-### 5.3 Satisfaction Follow-Up
+### ~~5.3 Satisfaction Follow-Up~~ DONE (v2.3)
 After a ticket is marked resolved, auto-send email to submitter asking:
 - "Was your issue resolved?" (Yes / No / Partially)
 - Optional comment box
 
 Link opens a simple web page that records the response. Track CSAT score across tickets.
 
-Requires: new email template, `/api/feedback/:id/satisfaction` endpoint, simple response page.
+Implemented via `feedback_followup.py`: resolve endpoint, SendGrid CSAT email, token-based HTML response pages.
 
 ---
 
@@ -176,4 +176,4 @@ Requires: new email template, `/api/feedback/:id/satisfaction` endpoint, simple 
 | Low | 4.4 SLA Timer | Medium | Medium | Pending |
 | Low | 5.1 Status Tracking | Large | High | Pending |
 | Low | 5.2 Upvote Issues | Medium | Medium | Pending |
-| Low | 5.3 Satisfaction Follow-Up | Medium | Medium | Pending |
+| ~~Low~~ | ~~5.3 Satisfaction Follow-Up~~ | ~~Medium~~ | ~~Medium~~ | **Done v2.3** |
