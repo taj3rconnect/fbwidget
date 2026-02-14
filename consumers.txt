@@ -1,4 +1,2 @@
 # Apps using fbwidget — one frontend path per line
-# The pre-push hook will run `yarn upgrade fbwidget` in each
-D:/projects/TZMonitor/frontend
-D:/projects/JTCRM/frontend
+# The pre-push hook will run `npm install` in each
