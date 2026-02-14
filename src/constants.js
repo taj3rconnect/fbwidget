@@ -19,7 +19,7 @@ export const MOODS = [
   { value: 5, emoji: '\u{1F929}', label: 'Love it' },
 ];
 
-export const FBWIDGET_VERSION = 'v2.4';
+export const FBWIDGET_VERSION = 'v2.5';
 
 export const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'application/pdf', 'text/plain'];
 export const ALLOWED_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.pdf', '.txt', '.log'];
